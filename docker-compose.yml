@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  web:
+    image: naufalln18-tailadmin-laravel:beta
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8090:80"
+    volumes:
+      - .:/var/www/sosmed
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=laravel
+      - DB_USERNAME=naufal
+      - DB_PASSWORD=opang123
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: opang123
+    ports:
+      - "3307:3306"
+
