@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Install dependencies
+npm install
+
+# Compile assets
+npm run dev
+
 # Install PHP dependencies
 composer install
 
@@ -9,5 +15,14 @@ cp .env.example .env
 # Generate application key
 php artisan key:generate
 
-# Run database migrations
+# Update database host dan port, serta password di .env file
+sed -i 's/DB_HOST=127.0.0.1/DB_HOST=mysql/g' .env
+sed -i 's/DB_PORT=3306/DB_PORT=3307/g' .env
+sed -i 's/DB_PASSWORD=/DB_PASSWORD=password/g' .env
+
+# Run migrations and seed database
 php artisan migrate
+php artisan db:seed
+
+# Create storage symbolic link
+php artisan storage:link
