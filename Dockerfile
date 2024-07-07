@@ -32,11 +32,8 @@ RUN a2dissite 000-default.conf && \
 # Set working directory
 WORKDIR /var/www/sosmed
 
-# Add and give permission to install.sh
-ADD install.sh /var/www/sosmed/install.sh
-RUN chmod +x /var/www/sosmed/install.sh
-
 # Install application dependencies
+RUN chmod +x install.sh
 RUN ./install.sh
 
 # Set permissions
