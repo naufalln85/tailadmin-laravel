@@ -1,69 +1,48 @@
-version: '3'
-services:
-  anemon.test:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: sail-8.1/app
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    ports:
-      - '8090:8090'
-    environment:
-      WWWUSER: '${WWWUSER}'
-      LARAVEL_SAIL: 1
-      XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
-      XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
-    volumes:
-      - './sosmed:/var/www/sosmed'
-    networks:
-      - sail
-    depends_on:
-      - mysql
-      - redis
-  mysql:
-    image: 'mysql/mysql-server:8.0'
-    ports:
-      - '${FORWARD_DB_PORT:-3307}:3306'
-    environment:
-      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-      MYSQL_ROOT_HOST: "%"
-      MYSQL_DATABASE: '${DB_DATABASE}'
-      MYSQL_USER: '${DB_USERNAME}'
-      MYSQL_PASSWORD: '${DB_PASSWORD}'
-      MYSQL_ALLOW_EMPTY_PASSWORD: 1
-    volumes:
-      - 'sailmysql:/var/lib/mysql'
-    networks:
-      - sail
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
-      retries: 3
-      timeout: 5s
-  redis:
-    image: 'redis:alpine'
-    ports:
-      - '${FORWARD_REDIS_PORT:-6379}:6379'
-    volumes:
-      - 'sailredis:/data'
-    networks:
-      - sail
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      retries: 3
-      timeout: 5s
-  mailhog:
-    image: 'mailhog/mailhog:latest'
-    ports:
-      - '${FORWARD_MAILHOG_PORT:-1025}:1025'
-      - '${FORWARD_MAILHOG_DASHBOARD_PORT:-8025}:8025'
-    networks:
-      - sail
-networks:
-  sail:
-    driver: bridge
-volumes:
-  sailmysql:
-    driver: local
-  sailredis:
-    driver: local
+name: Laravel application (Mysql)
+run-name: Build, Push and Deploy image simple social media
+on:
+  push:
+    branches:
+      - main
+env:
+  IMAGE_NAME: "naufalln18/naufalln18-tailadmin-laravel:beta"
+jobs:
+  run-mysql-in-docker:
+    runs-on: self-hosted
+    steps:
+      - name: Delete container mysql if exist
+        continue-on-error: true
+        run: docker rm -f $(docker ps -a | grep 'mysql\|social\|media' | awk '{print $1}')
+      - name: Running mysql in container
+        run: docker run -d --name mysql -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=social_media -p 3307:3306 mysql:5.7
+      - name: List docker container
+        run: docker ps -a
+
+  build-push-image:
+    needs: run-mysql-in-docker
+    runs-on: self-hosted
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Build Image
+        run: docker build -t $IMAGE_NAME .
+      - name: List Image
+        run: docker image ls
+      - name: Login to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
+      - name: Push Image
+        run: docker push $IMAGE_NAME
+
+  deploy-social-media:
+    needs: build-push-image
+    runs-on: self-hosted
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: stop and remove existing container
+        run: docker compose down --rmi all
+      - name: start container
+        run: docker compose up -d
