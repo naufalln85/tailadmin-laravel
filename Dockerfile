@@ -32,6 +32,10 @@ RUN a2dissite 000-default.conf && \
 # Set working directory
 WORKDIR /var/www/sosmed
 
+# Add and give permission to install.sh
+ADD install.sh /var/www/sosmed/install.sh
+RUN chmod +x /var/www/sosmed/install.sh
+
 # Install application dependencies
 RUN ./install.sh
 
@@ -42,5 +46,5 @@ RUN chmod -R 755 /var/www/sosmed
 # Expose the port
 EXPOSE 80
 
-# Start the application
+# Start Apache
 CMD ["apachectl", "-D", "FOREGROUND"]
