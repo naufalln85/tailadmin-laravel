@@ -16,7 +16,7 @@ cp .env.example .env
 php artisan key:generate
 
 # Update database host dan port, serta password di .env file
-sed -i 's/DB_HOST=127.0.0.1/DB_HOST=localhost/g' .env
+sed -i 's/DB_HOST=127.0.0.1/DB_HOST=laravel/g' .env
 sed -i 's/DB_PORT=3306/DB_PORT=3307/g' .env
 sed -i 's/DB_PASSWORD=/DB_PASSWORD=Opang123**/g' .env
 
